@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import SignInPage from "./auth/signin/page"
-import SignUpPage from "./auth/signup/page"
-import GetStartedPage from "./onboarding/get-started/page"
+import SignInPage from "@/components/auth/SignInPage";
+import SignUpPage from "@/components/auth/SignUpPage";
+import GetStartedPage from "@/components/onboarding/GetStartedPage";
 import MainApp from "./components/main-app"
 import { authAPI } from "@/lib/api"
 
