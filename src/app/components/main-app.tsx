@@ -818,7 +818,7 @@ export default function MainApp({ onSignOut }: MainAppProps) {
       // PATCH /notifications/:id/read
       await notificationAPI.markAsRead(notificationId);
       setNotifications((prev) =>
-        prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
+        prev.map((n) => (n._id === notificationId ? { ...n, read: true } : n))
       );
     } catch (err) {
       console.error("Failed to mark notification as read:", err);
