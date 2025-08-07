@@ -940,7 +940,7 @@ export default function MainApp({ onSignOut }: MainAppProps) {
         stopCall();
       });
 
-      peerInstance.on("error", (err) => {
+      peerInstance.on("error", (err: unknown) => {
         console.error("WebRTC error:", err);
         stopCall();
       });
