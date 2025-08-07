@@ -1691,7 +1691,7 @@ function PostCard({
           <CommentsSection
             postId={post._id}
             initialComments={post.comments}
-            onComment={onComment}
+            onComment={(postId, content) => Promise.resolve(onComment(postId, content))}
             onClose={() => setShowComments(false)}
           />
         )}
