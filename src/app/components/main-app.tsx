@@ -127,6 +127,11 @@ interface Message {
   read: boolean;
 }
 
+interface MessageResponse {
+  status: "success" | "error";
+  error?: string;
+}
+
 interface MainAppProps {
   onSignOut: () => void;
 }
@@ -853,7 +858,7 @@ export default function MainApp({ onSignOut }: MainAppProps) {
           content: newMessage,
           conversation: selectedConversation,
         },
-        (response) => {
+        (response: MessageResponse) => {
           if (response?.status !== "success") {
             setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
             console.error("Message failed:", response?.error);
