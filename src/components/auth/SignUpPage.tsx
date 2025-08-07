@@ -1,23 +1,34 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { motion } from "framer-motion"
-import { Eye, EyeOff, Mail, Lock, User, AtSign, Apple, Check, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
-import { authAPI } from '@/lib/api';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  User,
+  AtSign,
+  Apple,
+  Check,
+  X,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { authAPI } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 interface SignUpPageProps {
-  onSignUp: (token: string) => void
-  onSwitchToSignIn: () => void
+  onSignUp: (token: string) => void;
+  onSwitchToSignIn: () => void;
 }
 
 interface PasswordRequirement {
-  label: string
-  test: (password: string) => boolean
+  label: string;
+  test: (password: string) => boolean;
 }
 
 const passwordRequirements: PasswordRequirement[] = [
@@ -25,73 +36,83 @@ const passwordRequirements: PasswordRequirement[] = [
   { label: "One uppercase letter", test: (p) => /[A-Z]/.test(p) },
   { label: "One lowercase letter", test: (p) => /[a-z]/.test(p) },
   { label: "One number", test: (p) => /\d/.test(p) },
-  { label: "One special character", test: (p) => /[!@#$%^&*(),.?":{}|<>]/.test(p) },
-]
+  {
+    label: "One special character",
+    test: (p) => /[!@#$%^&*(),.?":{}|<>]/.test(p),
+  },
+];
 
-export default function SignUpPage({ onSignUp, onSwitchToSignIn }: SignUpPageProps) {
+export default function SignUpPage({
+  onSignUp,
+  onSwitchToSignIn,
+}: SignUpPageProps) {
   const [formData, setFormData] = useState({
     fullName: "",
     username: "",
     email: "",
     password: "",
     confirmPassword: "",
-  })
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [errors, setErrors] = useState<{ [key: string]: string }>({})
-  const [showPasswordRequirements, setShowPasswordRequirements] = useState(false)
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [showPasswordRequirements, setShowPasswordRequirements] =
+    useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }))
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
-  }
+  };
 
   const validateForm = () => {
-    const newErrors: { [key: string]: string } = {}
+    const newErrors: { [key: string]: string } = {};
 
     if (!formData.fullName.trim()) {
-      newErrors.fullName = "Full name is required"
+      newErrors.fullName = "Full name is required";
     } else if (formData.fullName.trim().length < 2) {
-      newErrors.fullName = "Full name must be at least 2 characters"
+      newErrors.fullName = "Full name must be at least 2 characters";
     }
 
     if (!formData.username.trim()) {
-      newErrors.username = "Username is required"
+      newErrors.username = "Username is required";
     } else if (formData.username.length < 3) {
-      newErrors.username = "Username must be at least 3 characters"
+      newErrors.username = "Username must be at least 3 characters";
     } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
-      newErrors.username = "Username can only contain letters, numbers, and underscores"
+      newErrors.username =
+        "Username can only contain letters, numbers, and underscores";
     }
 
     if (!formData.email) {
-      newErrors.email = "Email is required"
+      newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email"
+      newErrors.email = "Please enter a valid email";
     }
 
     if (!formData.password) {
-      newErrors.password = "Password is required"
+      newErrors.password = "Password is required";
     } else {
-      const failedRequirements = passwordRequirements.filter((req) => !req.test(formData.password))
+      const failedRequirements = passwordRequirements.filter(
+        (req) => !req.test(formData.password)
+      );
       if (failedRequirements.length > 0) {
-        newErrors.password = "Password doesn't meet all requirements"
+        newErrors.password = "Password doesn't meet all requirements";
       }
     }
 
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password"
+      newErrors.confirmPassword = "Please confirm your password";
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords don't match"
+      newErrors.confirmPassword = "Passwords don't match";
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,21 +125,24 @@ export default function SignUpPage({ onSignUp, onSwitchToSignIn }: SignUpPagePro
         fullName: formData.fullName,
         username: formData.username,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
       });
-      onSignUp(data.token);
+
+      localStorage.setItem("authToken", data.token);
+      document.cookie = `token=${data.token}; path=/`;
+      router.push("/onboarding/get-started");
     } catch (error) {
       if (error instanceof Error) {
         // Handle specific backend errors
-        if (error.message.includes('email')) {
+        if (error.message.includes("email")) {
           setErrors({ email: error.message });
-        } else if (error.message.includes('username')) {
+        } else if (error.message.includes("username")) {
           setErrors({ username: error.message });
         } else {
           setErrors({ general: error.message });
         }
       } else {
-        setErrors({ general: 'An unknown error occurred' });
+        setErrors({ general: "An unknown error occurred" });
       }
     } finally {
       setIsLoading(false);
@@ -127,13 +151,17 @@ export default function SignUpPage({ onSignUp, onSwitchToSignIn }: SignUpPagePro
 
   const handleSocialSignUp = (provider: string) => {
     // You'll implement your social auth here
-    console.log(`Sign up with ${provider}`)
-  }
+    console.log(`Sign up with ${provider}`);
+  };
 
   const getPasswordStrength = () => {
-    const passedRequirements = passwordRequirements.filter((req) => req.test(formData.password)).length
-    return (passedRequirements / passwordRequirements.length) * 100
-  }
+    const passedRequirements = passwordRequirements.filter((req) =>
+      req.test(formData.password)
+    ).length;
+    return (passedRequirements / passwordRequirements.length) * 100;
+  };
+
+  const router = useRouter();
 
   return (
     <div className="min-h-screen flex items-center justify-center p-3 sm:p-4 bg-gradient-to-br from-purple-50 via-white to-pink-50 dark:from-gray-900 dark:via-black dark:to-gray-900">
@@ -184,7 +212,10 @@ export default function SignUpPage({ onSignUp, onSwitchToSignIn }: SignUpPagePro
                   className="w-full h-11 sm:h-12 text-sm sm:text-base border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 bg-transparent"
                   onClick={() => handleSocialSignUp("google")}
                 >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" viewBox="0 0 24 24">
+                  <svg
+                    className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       fill="currentColor"
                       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -231,7 +262,10 @@ export default function SignUpPage({ onSignUp, onSwitchToSignIn }: SignUpPagePro
 
               {/* Full Name Input */}
               <div className="space-y-1 sm:space-y-2">
-                <label htmlFor="fullName" className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="fullName"
+                  className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Full Name
                 </label>
                 <div className="relative">
@@ -242,7 +276,9 @@ export default function SignUpPage({ onSignUp, onSwitchToSignIn }: SignUpPagePro
                     type="text"
                     value={formData.fullName}
                     onChange={handleInputChange}
-                    className={`pl-10 h-11 sm:h-12 text-sm sm:text-base ${errors.fullName ? "border-red-500" : ""}`}
+                    className={`pl-10 h-11 sm:h-12 text-sm sm:text-base ${
+                      errors.fullName ? "border-red-500" : ""
+                    }`}
                     placeholder="Enter your full name"
                   />
                 </div>
@@ -259,7 +295,10 @@ export default function SignUpPage({ onSignUp, onSwitchToSignIn }: SignUpPagePro
 
               {/* Username Input */}
               <div className="space-y-1 sm:space-y-2">
-                <label htmlFor="username" className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="username"
+                  className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Username
                 </label>
                 <div className="relative">
@@ -270,7 +309,9 @@ export default function SignUpPage({ onSignUp, onSwitchToSignIn }: SignUpPagePro
                     type="text"
                     value={formData.username}
                     onChange={handleInputChange}
-                    className={`pl-10 h-11 sm:h-12 text-sm sm:text-base ${errors.username ? "border-red-500" : ""}`}
+                    className={`pl-10 h-11 sm:h-12 text-sm sm:text-base ${
+                      errors.username ? "border-red-500" : ""
+                    }`}
                     placeholder="Choose a username"
                   />
                 </div>
@@ -287,7 +328,10 @@ export default function SignUpPage({ onSignUp, onSwitchToSignIn }: SignUpPagePro
 
               {/* Email Input */}
               <div className="space-y-1 sm:space-y-2">
-                <label htmlFor="email" className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="email"
+                  className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Email
                 </label>
                 <div className="relative">
@@ -298,7 +342,9 @@ export default function SignUpPage({ onSignUp, onSwitchToSignIn }: SignUpPagePro
                     type="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className={`pl-10 h-11 sm:h-12 text-sm sm:text-base ${errors.email ? "border-red-500" : ""}`}
+                    className={`pl-10 h-11 sm:h-12 text-sm sm:text-base ${
+                      errors.email ? "border-red-500" : ""
+                    }`}
                     placeholder="Enter your email"
                   />
                 </div>
@@ -315,7 +361,10 @@ export default function SignUpPage({ onSignUp, onSwitchToSignIn }: SignUpPagePro
 
               {/* Password Input */}
               <div className="space-y-1 sm:space-y-2">
-                <label htmlFor="password" className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="password"
+                  className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Password
                 </label>
                 <div className="relative">
@@ -327,7 +376,9 @@ export default function SignUpPage({ onSignUp, onSwitchToSignIn }: SignUpPagePro
                     value={formData.password}
                     onChange={handleInputChange}
                     onFocus={() => setShowPasswordRequirements(true)}
-                    className={`pl-10 pr-10 h-11 sm:h-12 text-sm sm:text-base ${errors.password ? "border-red-500" : ""}`}
+                    className={`pl-10 pr-10 h-11 sm:h-12 text-sm sm:text-base ${
+                      errors.password ? "border-red-500" : ""
+                    }`}
                     placeholder="Create a password"
                   />
                   <button
@@ -335,7 +386,11 @@ export default function SignUpPage({ onSignUp, onSwitchToSignIn }: SignUpPagePro
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
 
@@ -350,8 +405,8 @@ export default function SignUpPage({ onSignUp, onSwitchToSignIn }: SignUpPagePro
                           getPasswordStrength() < 40
                             ? "bg-red-500"
                             : getPasswordStrength() < 80
-                              ? "bg-yellow-500"
-                              : "bg-green-500"
+                            ? "bg-yellow-500"
+                            : "bg-green-500"
                         }`}
                       />
                     </div>
@@ -366,7 +421,7 @@ export default function SignUpPage({ onSignUp, onSwitchToSignIn }: SignUpPagePro
                     className="space-y-1 text-xs bg-gray-50 dark:bg-gray-900 p-2 sm:p-3 rounded-lg"
                   >
                     {passwordRequirements.map((req, index) => {
-                      const isValid = req.test(formData.password)
+                      const isValid = req.test(formData.password);
                       return (
                         <div key={index} className="flex items-center gap-2">
                           {isValid ? (
@@ -376,13 +431,15 @@ export default function SignUpPage({ onSignUp, onSwitchToSignIn }: SignUpPagePro
                           )}
                           <span
                             className={`text-xs ${
-                              isValid ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                              isValid
+                                ? "text-green-600 dark:text-green-400"
+                                : "text-red-600 dark:text-red-400"
                             }`}
                           >
                             {req.label}
                           </span>
                         </div>
-                      )
+                      );
                     })}
                   </motion.div>
                 )}
@@ -414,7 +471,9 @@ export default function SignUpPage({ onSignUp, onSwitchToSignIn }: SignUpPagePro
                     type={showConfirmPassword ? "text" : "password"}
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
-                    className={`pl-10 pr-10 h-11 sm:h-12 text-sm sm:text-base ${errors.confirmPassword ? "border-red-500" : ""}`}
+                    className={`pl-10 pr-10 h-11 sm:h-12 text-sm sm:text-base ${
+                      errors.confirmPassword ? "border-red-500" : ""
+                    }`}
                     placeholder="Confirm your password"
                   />
                   <button
@@ -422,7 +481,11 @@ export default function SignUpPage({ onSignUp, onSwitchToSignIn }: SignUpPagePro
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   >
-                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showConfirmPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
                 {errors.confirmPassword && (
@@ -439,11 +502,17 @@ export default function SignUpPage({ onSignUp, onSwitchToSignIn }: SignUpPagePro
               {/* Terms and Conditions */}
               <div className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
                 By creating an account, you agree to our{" "}
-                <button type="button" className="text-purple-600 hover:text-purple-700 dark:text-purple-400 underline">
+                <button
+                  type="button"
+                  className="text-purple-600 hover:text-purple-700 dark:text-purple-400 underline"
+                >
                   Terms of Service
                 </button>{" "}
                 and{" "}
-                <button type="button" className="text-purple-600 hover:text-purple-700 dark:text-purple-400 underline">
+                <button
+                  type="button"
+                  className="text-purple-600 hover:text-purple-700 dark:text-purple-400 underline"
+                >
                   Privacy Policy
                 </button>
               </div>
@@ -457,7 +526,11 @@ export default function SignUpPage({ onSignUp, onSwitchToSignIn }: SignUpPagePro
                 {isLoading ? (
                   <motion.div
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                    transition={{
+                      duration: 1,
+                      repeat: Number.POSITIVE_INFINITY,
+                      ease: "linear",
+                    }}
                     className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full"
                   />
                 ) : (
@@ -482,5 +555,5 @@ export default function SignUpPage({ onSignUp, onSwitchToSignIn }: SignUpPagePro
         </Card>
       </motion.div>
     </div>
-  )
+  );
 }

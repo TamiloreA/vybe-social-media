@@ -1,54 +1,58 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { motion } from "framer-motion"
-import { Eye, EyeOff, Mail, Lock, Apple } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
-import { authAPI } from '@/lib/api';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Eye, EyeOff, Mail, Lock, Apple } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { authAPI } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 interface SignInPageProps {
-  onSignIn: (token: string) => void
-  onSwitchToSignUp: () => void
+  onSignIn: (token: string) => void;
+  onSwitchToSignUp: () => void;
 }
 
-export default function SignInPage({ onSignIn, onSwitchToSignUp }: SignInPageProps) {
+export default function SignInPage({
+  onSignIn,
+  onSwitchToSignUp,
+}: SignInPageProps) {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-  })
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [errors, setErrors] = useState<{ [key: string]: string }>({})
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }))
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
-  }
+  };
 
   const validateForm = () => {
-    const newErrors: { [key: string]: string } = {}
+    const newErrors: { [key: string]: string } = {};
 
     if (!formData.email) {
-      newErrors.email = "Email is required"
+      newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email"
+      newErrors.email = "Please enter a valid email";
     }
 
     if (!formData.password) {
-      newErrors.password = "Password is required"
+      newErrors.password = "Password is required";
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,25 +63,29 @@ export default function SignInPage({ onSignIn, onSwitchToSignUp }: SignInPagePro
     try {
       const data = await authAPI.login({
         email: formData.email,
-        password: formData.password
+        password: formData.password,
       });
-      onSignIn(data.token);
+
+      localStorage.setItem("authToken", data.token);
+      document.cookie = `token=${data.token}; path=/`;
+      window.location.href = "/";
     } catch (error) {
       if (error instanceof Error) {
         setErrors({ general: error.message });
       } else {
-        setErrors({ general: 'An unknown error occurred' });
+        setErrors({ general: "An unknown error occurred" });
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-
   const handleSocialSignIn = (provider: string) => {
     // You'll implement your social auth here
-    console.log(`Sign in with ${provider}`)
-  }
+    console.log(`Sign in with ${provider}`);
+  };
+
+  const router = useRouter();
 
   return (
     <div className="min-h-screen flex items-center justify-center p-3 sm:p-4 bg-gradient-to-br from-purple-50 via-white to-pink-50 dark:from-gray-900 dark:via-black dark:to-gray-900">
@@ -128,7 +136,10 @@ export default function SignInPage({ onSignIn, onSwitchToSignUp }: SignInPagePro
                   className="w-full h-11 sm:h-12 text-sm sm:text-base border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 bg-transparent"
                   onClick={() => handleSocialSignIn("google")}
                 >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" viewBox="0 0 24 24">
+                  <svg
+                    className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       fill="currentColor"
                       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -175,7 +186,10 @@ export default function SignInPage({ onSignIn, onSwitchToSignUp }: SignInPagePro
 
               {/* Email Input */}
               <div className="space-y-1 sm:space-y-2">
-                <label htmlFor="email" className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="email"
+                  className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Email
                 </label>
                 <div className="relative">
@@ -186,7 +200,9 @@ export default function SignInPage({ onSignIn, onSwitchToSignUp }: SignInPagePro
                     type="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className={`pl-10 h-11 sm:h-12 text-sm sm:text-base ${errors.email ? "border-red-500" : ""}`}
+                    className={`pl-10 h-11 sm:h-12 text-sm sm:text-base ${
+                      errors.email ? "border-red-500" : ""
+                    }`}
                     placeholder="Enter your email"
                   />
                 </div>
@@ -203,7 +219,10 @@ export default function SignInPage({ onSignIn, onSwitchToSignUp }: SignInPagePro
 
               {/* Password Input */}
               <div className="space-y-1 sm:space-y-2">
-                <label htmlFor="password" className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="password"
+                  className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Password
                 </label>
                 <div className="relative">
@@ -214,7 +233,9 @@ export default function SignInPage({ onSignIn, onSwitchToSignUp }: SignInPagePro
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={handleInputChange}
-                    className={`pl-10 pr-10 h-11 sm:h-12 text-sm sm:text-base ${errors.password ? "border-red-500" : ""}`}
+                    className={`pl-10 pr-10 h-11 sm:h-12 text-sm sm:text-base ${
+                      errors.password ? "border-red-500" : ""
+                    }`}
                     placeholder="Enter your password"
                   />
                   <button
@@ -222,7 +243,11 @@ export default function SignInPage({ onSignIn, onSwitchToSignUp }: SignInPagePro
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
                 {errors.password && (
@@ -255,7 +280,11 @@ export default function SignInPage({ onSignIn, onSwitchToSignUp }: SignInPagePro
                 {isLoading ? (
                   <motion.div
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                    transition={{
+                      duration: 1,
+                      repeat: Number.POSITIVE_INFINITY,
+                      ease: "linear",
+                    }}
                     className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full"
                   />
                 ) : (
@@ -269,7 +298,7 @@ export default function SignInPage({ onSignIn, onSwitchToSignUp }: SignInPagePro
               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                 Don't have an account?{" "}
                 <button
-                  onClick={onSwitchToSignUp}
+                  onClick={() => router.push("/auth/signup")}
                   className="text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 font-medium"
                 >
                   Sign up
@@ -280,5 +309,5 @@ export default function SignInPage({ onSignIn, onSwitchToSignUp }: SignInPagePro
         </Card>
       </motion.div>
     </div>
-  )
+  );
 }

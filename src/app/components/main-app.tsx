@@ -109,7 +109,7 @@ interface Conversation {
     username: string;
     profilePic?: string;
     isOnline?: boolean;
-    lastSeen?: string;
+    lastSeen: string;
   }[];
   lastMessage?: {
     content: string;
@@ -279,7 +279,15 @@ export default function MainApp({ onSignOut }: MainAppProps) {
     const loadConversations = async () => {
       try {
         const convos = await chatAPI.getConversations();
-        setConversations(convos);
+        const cleanedConvos = (convos as Conversation[]).map((c) => ({
+          ...c,
+          participants: c.participants.map((p) => ({
+            ...p,
+            lastSeen: p.lastSeen ?? new Date().toISOString(),
+          })),
+        }));
+  
+        setConversations(cleanedConvos);
       } catch (err) {
         console.error("Failed to load conversations:", err);
       }
@@ -1273,6 +1281,8 @@ export default function MainApp({ onSignOut }: MainAppProps) {
               onSendMessage={sendMessage}
               currentUser={currentUser}
               loadingMessages={loadingMessages}
+              socket={socket}
+              typingUsers={typingUsers}
             />
           )}
           {activeTab === "search" && <SearchPage currentUser={currentUser} />}
